@@ -155,7 +155,7 @@ onMounted(loadHotels)
               <div><span>TRANSPORT</span><strong>{{ hotel.transportationIncluded ? 'Included' : 'Not included'
                   }}</strong></div>
             </div>
-            <div class="hotel-price"><span>PACKAGE PRICE</span><strong>{{ formatSar(hotel.priceSAR) }}</strong></div>
+            <div class="hotel-price"><span>PER PERSON / NIGHT</span><strong>{{ formatSar(hotel.priceSAR) }}</strong></div>
           </article>
         </div>
       </section>
@@ -187,7 +187,7 @@ onMounted(loadHotels)
           <label>Distance from {{ landmark }} (meters)<input v-model.number="form.distanceMeters" min="0" type="number"
               required /></label>
         </div>
-        <label>Price (SAR)<input v-model.number="form.priceSAR" min="0" step="0.01" type="number" required /></label>
+        <label>Price per person/night (SAR)<input v-model.number="form.priceSAR" min="0" step="0.01" type="number" required /></label>
         <label class="checkbox-label"><input v-model="form.transportationIncluded"
             type="checkbox" /><span><strong>Transportation included</strong><small>Transport is included in this hotel
               package.</small></span></label>

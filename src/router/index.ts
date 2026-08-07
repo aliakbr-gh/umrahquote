@@ -6,7 +6,12 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/visas',
+      redirect: '/dashboard',
+    },
+    {
+      path: '/dashboard',
+      name: 'dashboard',
+      component: () => import('../views/DashboardView.vue'),
     },
     {
       path: '/visas',

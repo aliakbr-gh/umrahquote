@@ -173,7 +173,7 @@ onMounted(refreshCounts)
             <div class="backup-icon">↓</div>
             <p class="eyebrow">EXPORT</p>
             <h3>Download a backup</h3>
-            <p>Save visas and hotels as a portable JSON file. Keep it somewhere safe.</p>
+            <p>Save visas, hotels, and tickets as a portable JSON file. Keep it somewhere safe.</p>
             <button class="primary-button" @click="exportBackup">Download all data</button>
           </article>
 
