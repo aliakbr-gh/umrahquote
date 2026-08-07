@@ -2,9 +2,10 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { db, type Visa } from '../db'
 import { useCurrency } from '../composables/useCurrency'
+import AppSidebar from '../components/AppSidebar.vue'
+import AppHeader from '../components/AppHeader.vue'
 
-const { currency, rate, rateUpdatedAt, isSyncing, syncError, setCurrency, formatSar, syncRate } =
-  useCurrency()
+const { formatSar } = useCurrency()
 
 const visas = ref<Visa[]>([])
 const loading = ref(true)
@@ -31,14 +32,6 @@ const emptyForm = (): VisaForm => ({
 const form = reactive(emptyForm())
 
 const isEditing = computed(() => editingId.value !== null)
-const rateLabel = computed(() => `1 SAR = ${rate.value.toFixed(2)} PKR`)
-const lastUpdated = computed(() =>
-  rateUpdatedAt.value
-    ? new Intl.DateTimeFormat('en-PK', { dateStyle: 'medium', timeStyle: 'short' }).format(
-      new Date(rateUpdatedAt.value),
-    )
-    : 'Not synced yet',
-)
 
 async function loadVisas() {
   loading.value = true
@@ -115,46 +108,13 @@ onMounted(loadVisas)
 
 <template>
   <div class="app-shell">
-    <aside class="sidebar">
-      <div class="brand"><span class="brand-mark">U</span><span>UmrahQuote</span></div>
-      <nav>
-        <a class="nav-item" href="#"><span>⌂</span> Overview</a>
-        <a class="nav-item active" href="#visas"><span>▣</span> Visa module</a>
-        <a class="nav-item muted" href="#"><span>▤</span> Hotels <small>Soon</small></a>
-        <a class="nav-item muted" href="#"><span>✈</span> Tickets <small>Soon</small></a>
-        <a class="nav-item muted" href="#"><span>↕</span> Backup & import <small>Soon</small></a>
-      </nav>
-      <div class="local-note"><span>●</span>
-        <div><strong>Local-first storage</strong>
-          <p>Your records stay in this browser.</p>
-        </div>
-      </div>
-    </aside>
+    <AppSidebar />
 
     <main>
-      <header class="topbar">
-        <div>
-          <p class="eyebrow">UMRAH OPERATIONS</p>
-          <h1>Visa management</h1>
-        </div>
-        <div class="currency-control" aria-label="Display currency">
-          <button :class="{ selected: currency === 'SAR' }" @click="setCurrency('SAR')">SAR</button>
-          <button :class="{ selected: currency === 'PKR' }" @click="setCurrency('PKR')">PKR</button>
-        </div>
-      </header>
+      <AppHeader title="Visa management" />
 
       <section class="content">
-        <div class="rate-card">
-          <div class="rate-icon">↗</div>
-          <div>
-            <p>LIVE EXCHANGE RATE</p><strong>{{ rateLabel }}</strong><span>Updated {{ lastUpdated }}</span>
-          </div>
-          <button class="icon-button" :disabled="isSyncing" title="Refresh rate" @click="syncRate(true)">{{ isSyncing ?
-            '…' : '↻' }}</button>
-        </div>
-        <p v-if="syncError" class="inline-alert">{{ syncError }}</p>
-
-        <div class="section-heading" id="visas">
+        <div class="section-heading">
           <div>
             <p class="eyebrow">YOUR CATALOGUE</p>
             <h2>Visa types</h2>

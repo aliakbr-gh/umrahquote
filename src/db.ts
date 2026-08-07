@@ -11,8 +11,25 @@ export interface Visa {
   updatedAt: string
 }
 
+export type HotelLocation = 'Makkah' | 'Madina'
+export type SharingType = 'Quint' | 'Quad' | 'Triple' | 'Double Bed'
+
+export interface Hotel {
+  id?: number
+  name: string
+  location: HotelLocation
+  umrahDays: number
+  sharingType: SharingType
+  distanceMeters: number
+  priceSAR: number
+  transportationIncluded: boolean
+  createdAt: string
+  updatedAt: string
+}
+
 class UmrahQuoteDatabase extends Dexie {
   visas!: EntityTable<Visa, 'id'>
+  hotels!: EntityTable<Hotel, 'id'>
 
   constructor() {
     super('umrah-quote-db')
@@ -36,6 +53,10 @@ class UmrahQuoteDatabase extends Dexie {
             delete visa.infantPriceSar
           }),
       )
+    this.version(3).stores({
+      visas: '++id, name, validityDays, createdAt, updatedAt',
+      hotels: '++id, name, location, sharingType, umrahDays, updatedAt',
+    })
   }
 }
 
