@@ -663,6 +663,162 @@ h2 {
     margin-top: 22px;
 }
 
+.backup-summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    margin-bottom: 22px;
+    overflow: hidden;
+    border: 1px solid #dfe7e3;
+    border-radius: 12px;
+    background: #dfe7e3;
+    gap: 1px;
+}
+
+.backup-summary div {
+    padding: 16px 20px;
+    background: white;
+}
+
+.backup-summary span {
+    display: block;
+    margin-bottom: 5px;
+    color: #82958f;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+.backup-summary strong {
+    color: #173f36;
+    font-family: Georgia, serif;
+    font-size: 22px;
+}
+
+.backup-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 18px;
+}
+
+.backup-card {
+    padding: 25px;
+    border: 1px solid #e0e7e3;
+    border-radius: 14px;
+    background: white;
+    box-shadow: 0 7px 24px #193b3210;
+}
+
+.backup-card h3 {
+    margin-bottom: 8px;
+    font-size: 17px;
+}
+
+.backup-card>p:not(.eyebrow) {
+    min-height: 40px;
+    margin-bottom: 20px;
+    color: #70857f;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.backup-icon {
+    display: grid;
+    place-items: center;
+    width: 42px;
+    height: 42px;
+    margin-bottom: 18px;
+    border-radius: 11px;
+    background: #e4f0eb;
+    color: #1b5b4c;
+    font-size: 20px;
+}
+
+.backup-icon.import {
+    background: #f4ead2;
+    color: #966d22;
+}
+
+.file-picker {
+    display: inline-block !important;
+    margin: 0 !important;
+    padding: 11px 17px;
+    border: 1px solid #b9cbc5;
+    border-radius: 9px;
+    color: #244b41 !important;
+    background: #f7faf8;
+    font-size: 13px !important;
+    text-align: center;
+    cursor: pointer;
+}
+
+.file-picker input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    opacity: 0;
+    overflow: hidden;
+}
+
+.import-preview {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 18px;
+    padding: 18px 20px;
+    border: 1px solid #c9ddd4;
+    border-radius: 12px;
+    background: #eaf3ef;
+}
+
+.import-preview h3 {
+    margin: 0 0 5px;
+    font-size: 14px;
+}
+
+.import-preview p:last-child {
+    margin: 0;
+    color: #6b817a;
+    font-size: 11px;
+}
+
+.preview-actions {
+    display: flex;
+    flex-shrink: 0;
+    gap: 8px;
+}
+
+.backup-message,
+.success-message {
+    margin-top: 16px;
+}
+
+.success-message {
+    padding: 10px 12px;
+    border-radius: 8px;
+    color: #23614f;
+    background: #e4f3ec;
+    font-size: 12px;
+}
+
+.safety-note {
+    margin-top: 28px;
+    padding: 16px 18px;
+    border-left: 3px solid #d1a348;
+    background: #faf7ef;
+}
+
+.safety-note strong {
+    font-size: 12px;
+}
+
+.safety-note p {
+    margin: 4px 0 0;
+    color: #7a786c;
+    font-size: 11px;
+}
+
 @media (max-width: 850px) {
     .app-shell {
         display: block;
@@ -783,5 +939,26 @@ h2 {
     .rate-card span {
         display: block;
         margin-top: 2px;
+    }
+
+    .backup-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .backup-summary div {
+        padding: 12px;
+    }
+
+    .backup-summary strong {
+        font-size: 18px;
+    }
+
+    .import-preview {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .preview-actions {
+        justify-content: flex-end;
     }
 }

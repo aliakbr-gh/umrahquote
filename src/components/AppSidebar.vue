@@ -5,7 +5,7 @@
       <RouterLink class="nav-item" to="/visas"><span>▣</span> Visa</RouterLink>
       <RouterLink class="nav-item" to="/hotels"><span>▤</span> Hotels</RouterLink>
       <span class="nav-item muted"><span>✈</span> Tickets <small>Soon</small></span>
-      <span class="nav-item muted"><span>▧</span> Backup &amp; import <small>Soon</small></span>
+      <RouterLink class="nav-item" to="/backup"><span>▧</span> Backup &amp; import</RouterLink>
     </nav>
     <div class="local-note">
       <span>●</span>
