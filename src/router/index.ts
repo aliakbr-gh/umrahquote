@@ -19,6 +19,11 @@ const router = createRouter({
       component: () => import('../views/HotelView.vue'),
     },
     {
+      path: '/tickets',
+      name: 'tickets',
+      component: () => import('../views/TicketView.vue'),
+    },
+    {
       path: '/backup',
       name: 'backup',
       component: () => import('../views/BackupView.vue'),

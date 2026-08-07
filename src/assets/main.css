@@ -423,7 +423,7 @@ h2 {
 
 .prices {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 1px;
     margin-top: 20px;
     overflow: hidden;
@@ -693,6 +693,9 @@ h2 {
     font-family: Georgia, serif;
     font-size: 22px;
 }
+
+.ticket-symbol { transform: rotate(-8deg); }
+.ticket-route h3 span { padding: 0 3px; color: #b2832c; }
 
 .backup-grid {
     display: grid;

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref } from 'vue'
 import AppHeader from '../components/AppHeader.vue'
 import AppSidebar from '../components/AppSidebar.vue'
-import { db, type Hotel, type Visa } from '../db'
+import { db, type Hotel, type Ticket, type Visa } from '../db'
 
 type BackupFile = {
   app: 'UmrahQuote'
@@ -11,11 +11,13 @@ type BackupFile = {
   data: {
     visas: Visa[]
     hotels: Hotel[]
+    tickets: Ticket[]
   }
 }
 
 const visaCount = ref(0)
 const hotelCount = ref(0)
+const ticketCount = ref(0)
 const selectedBackup = ref<BackupFile | null>(null)
 const selectedFileName = ref('')
 const importError = ref('')
@@ -23,25 +25,29 @@ const importSuccess = ref('')
 const importing = ref(false)
 const fileInput = ref<HTMLInputElement | null>(null)
 
-const totalRecords = computed(() => visaCount.value + hotelCount.value)
+const totalRecords = computed(() => visaCount.value + hotelCount.value + ticketCount.value)
 const selectedTotal = computed(() =>
   selectedBackup.value
-    ? selectedBackup.value.data.visas.length + selectedBackup.value.data.hotels.length
+    ? selectedBackup.value.data.visas.length + selectedBackup.value.data.hotels.length + selectedBackup.value.data.tickets.length
     : 0,
 )
 
 async function refreshCounts() {
-  ;[visaCount.value, hotelCount.value] = await Promise.all([db.visas.count(), db.hotels.count()])
+  ;[visaCount.value, hotelCount.value, ticketCount.value] = await Promise.all([
+    db.visas.count(), db.hotels.count(), db.tickets.count(),
+  ])
 }
 
 async function exportBackup() {
   importSuccess.value = ''
-  const [visas, hotels] = await Promise.all([db.visas.toArray(), db.hotels.toArray()])
+  const [visas, hotels, tickets] = await Promise.all([
+    db.visas.toArray(), db.hotels.toArray(), db.tickets.toArray(),
+  ])
   const backup: BackupFile = {
     app: 'UmrahQuote',
     version: 1,
     exportedAt: new Date().toISOString(),
-    data: { visas, hotels },
+    data: { visas, hotels, tickets },
   }
   const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' })
   const url = URL.createObjectURL(blob)
@@ -59,7 +65,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function validateBackup(value: unknown): value is BackupFile {
   if (!isRecord(value) || value.app !== 'UmrahQuote' || !isRecord(value.data)) return false
-  if (!Array.isArray(value.data.visas) || !Array.isArray(value.data.hotels)) return false
+  if (!Array.isArray(value.data.visas) || !Array.isArray(value.data.hotels) || !Array.isArray(value.data.tickets)) return false
 
   const validVisas = value.data.visas.every(
     (item) =>
@@ -80,7 +86,13 @@ function validateBackup(value: unknown): value is BackupFile {
       typeof item.priceSAR === 'number' &&
       typeof item.transportationIncluded === 'boolean',
   )
-  return validVisas && validHotels
+  const validTickets = value.data.tickets.every(
+    (item) =>
+      isRecord(item) && typeof item.origin === 'string' && typeof item.destination === 'string' &&
+      typeof item.adultPriceSAR === 'number' && typeof item.childPriceSAR === 'number' &&
+      typeof item.infantPriceSAR === 'number',
+  )
+  return validVisas && validHotels && validTickets
 }
 
 async function selectFile(event: Event) {
@@ -120,10 +132,11 @@ async function restoreBackup() {
   importError.value = ''
   try {
     const backup = selectedBackup.value
-    await db.transaction('rw', [db.visas, db.hotels], async () => {
-      await Promise.all([db.visas.clear(), db.hotels.clear()])
+    await db.transaction('rw', [db.visas, db.hotels, db.tickets], async () => {
+      await Promise.all([db.visas.clear(), db.hotels.clear(), db.tickets.clear()])
       if (backup.data.visas.length) await db.visas.bulkAdd(backup.data.visas)
       if (backup.data.hotels.length) await db.hotels.bulkAdd(backup.data.hotels)
+      if (backup.data.tickets.length) await db.tickets.bulkAdd(backup.data.tickets)
     })
     await refreshCounts()
     cancelImport()
@@ -151,6 +164,7 @@ onMounted(refreshCounts)
         <div class="backup-summary">
           <div><span>VISA RECORDS</span><strong>{{ visaCount }}</strong></div>
           <div><span>HOTEL RECORDS</span><strong>{{ hotelCount }}</strong></div>
+          <div><span>TICKET RECORDS</span><strong>{{ ticketCount }}</strong></div>
           <div><span>TOTAL RECORDS</span><strong>{{ totalRecords }}</strong></div>
         </div>
 
@@ -176,7 +190,7 @@ onMounted(refreshCounts)
         </div>
 
         <div v-if="selectedBackup" class="import-preview">
-          <div><p class="eyebrow">READY TO IMPORT</p><h3>{{ selectedFileName }}</h3><p>{{ selectedBackup.data.visas.length }} visas · {{ selectedBackup.data.hotels.length }} hotels · Exported {{ new Date(selectedBackup.exportedAt).toLocaleString('en-PK') }}</p></div>
+          <div><p class="eyebrow">READY TO IMPORT</p><h3>{{ selectedFileName }}</h3><p>{{ selectedBackup.data.visas.length }} visas · {{ selectedBackup.data.hotels.length }} hotels · {{ selectedBackup.data.tickets.length }} tickets · Exported {{ new Date(selectedBackup.exportedAt).toLocaleString('en-PK') }}</p></div>
           <div class="preview-actions"><button class="secondary-button" @click="cancelImport">Cancel</button><button class="primary-button" :disabled="importing" @click="restoreBackup">{{ importing ? 'Importing…' : 'Replace & import' }}</button></div>
         </div>
         <p v-if="importError" class="form-error backup-message">{{ importError }}</p>

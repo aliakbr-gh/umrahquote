@@ -27,9 +27,21 @@ export interface Hotel {
   updatedAt: string
 }
 
+export interface Ticket {
+  id?: number
+  origin: string
+  destination: string
+  adultPriceSAR: number
+  childPriceSAR: number
+  infantPriceSAR: number
+  createdAt: string
+  updatedAt: string
+}
+
 class UmrahQuoteDatabase extends Dexie {
   visas!: EntityTable<Visa, 'id'>
   hotels!: EntityTable<Hotel, 'id'>
+  tickets!: EntityTable<Ticket, 'id'>
 
   constructor() {
     super('umrah-quote-db')
@@ -56,6 +68,11 @@ class UmrahQuoteDatabase extends Dexie {
     this.version(3).stores({
       visas: '++id, name, validityDays, createdAt, updatedAt',
       hotels: '++id, name, location, sharingType, umrahDays, updatedAt',
+    })
+    this.version(4).stores({
+      visas: '++id, name, validityDays, createdAt, updatedAt',
+      hotels: '++id, name, location, sharingType, umrahDays, updatedAt',
+      tickets: '++id, origin, destination, updatedAt',
     })
   }
 }
