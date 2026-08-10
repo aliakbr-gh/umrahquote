@@ -81,18 +81,23 @@ function validateBackup(value: unknown): value is BackupFile {
       isRecord(item) &&
       typeof item.name === 'string' &&
       (item.location === 'Makkah' || item.location === 'Madina') &&
-      typeof item.umrahDays === 'number' &&
       typeof item.distanceMeters === 'number' &&
-      typeof item.priceSAR === 'number' &&
-      typeof item.transportationIncluded === 'boolean',
+      typeof item.priceSAR === 'number',
   )
   const validTickets = value.data.tickets.every(
     (item) =>
       isRecord(item) && typeof item.origin === 'string' && typeof item.destination === 'string' &&
-      typeof item.adultPriceSAR === 'number' && typeof item.childPriceSAR === 'number' &&
-      typeof item.infantPriceSAR === 'number',
+      typeof item.adultPriceSAR === 'number',
   )
   return validVisas && validHotels && validTickets
+}
+
+async function clearDatabase() {
+  if (!totalRecords.value || !window.confirm(`Permanently clear all ${totalRecords.value} local records? This cannot be undone unless you have a backup.`)) return
+  await db.transaction('rw', [db.visas, db.hotels, db.tickets], () => Promise.all([db.visas.clear(), db.hotels.clear(), db.tickets.clear()]))
+  await refreshCounts()
+  importSuccess.value = 'All local catalogue records have been cleared.'
+  window.dispatchEvent(new Event('umrahquote:data-reset'))
 }
 
 async function selectFile(event: Event) {
@@ -195,6 +200,8 @@ onMounted(refreshCounts)
         </div>
         <p v-if="importError" class="form-error backup-message">{{ importError }}</p>
         <p v-if="importSuccess" class="success-message">{{ importSuccess }}</p>
+
+        <div class="safety-note"><strong>Clear local database</strong><p>Delete visas, hotels, and tickets from this browser. Export a backup first if you may need them later.</p><button class="secondary-button" :disabled="!totalRecords" @click="clearDatabase">Clear database</button></div>
 
         <div class="safety-note"><strong>Local data only</strong><p>Nothing is uploaded to a server. Exported files contain your catalogue data, so store them securely.</p></div>
       </section>

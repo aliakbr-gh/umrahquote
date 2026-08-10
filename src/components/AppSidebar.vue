@@ -15,16 +15,24 @@ async function importTestData() {
     { name: 'Premium Umrah Visa', validityDays: 90, adultPriceSAR: 650, childPriceSAR: 480, infantPriceSAR: 220, createdAt: now, updatedAt: now },
   ]
   const hotels: Hotel[] = [
-    { name: 'Swissotel Al Maqam', location: 'Makkah', umrahDays: 15, sharingType: 'Quad', distanceMeters: 150, priceSAR: 185, transportationIncluded: true, createdAt: now, updatedAt: now },
-    { name: 'Emaar Grand Hotel', location: 'Makkah', umrahDays: 21, sharingType: 'Quint', distanceMeters: 750, priceSAR: 95, transportationIncluded: true, createdAt: now, updatedAt: now },
-    { name: 'Anwar Al Madinah Mövenpick', location: 'Madina', umrahDays: 15, sharingType: 'Quad', distanceMeters: 120, priceSAR: 175, transportationIncluded: false, createdAt: now, updatedAt: now },
-    { name: 'Saja Al Madinah', location: 'Madina', umrahDays: 21, sharingType: 'Triple', distanceMeters: 500, priceSAR: 110, transportationIncluded: true, createdAt: now, updatedAt: now },
+    { name: 'Swissotel Al Maqam', location: 'Makkah', distanceMeters: 150, priceSAR: 925, createdAt: now, updatedAt: now },
+    { name: 'Emaar Grand Hotel', location: 'Makkah', distanceMeters: 750, priceSAR: 475, createdAt: now, updatedAt: now },
+    { name: 'Anwar Al Madinah Mövenpick', location: 'Madina', distanceMeters: 120, priceSAR: 875, createdAt: now, updatedAt: now },
+    { name: 'Saja Al Madinah', location: 'Madina', distanceMeters: 500, priceSAR: 550, createdAt: now, updatedAt: now },
   ]
-  const tickets: Ticket[] = [
-    { origin: 'Karachi (KHI)', destination: 'Jeddah (JED)', adultPriceSAR: 1650, childPriceSAR: 1320, infantPriceSAR: 320, createdAt: now, updatedAt: now },
-    { origin: 'Lahore (LHE)', destination: 'Jeddah (JED)', adultPriceSAR: 1780, childPriceSAR: 1425, infantPriceSAR: 345, createdAt: now, updatedAt: now },
-    { origin: 'Islamabad (ISB)', destination: 'Madina (MED)', adultPriceSAR: 1920, childPriceSAR: 1535, infantPriceSAR: 375, createdAt: now, updatedAt: now },
-  ]
+  const pakistanOrigins = [
+    ['Karachi (KHI)', 1650], ['Islamabad (ISB)', 1920], ['Lahore (LHE)', 1780], ['Multan (MUX)', 1740],
+  ] as const
+  const saudiDestinations = ['Jeddah (JED)', 'Madina (MED)'] as const
+  const tickets: Ticket[] = pakistanOrigins.flatMap(([origin, baseFare]) =>
+    saudiDestinations.flatMap((destination) => {
+      const fare = baseFare + (destination === 'Madina (MED)' ? 90 : 0)
+      return [
+        { origin, destination, adultPriceSAR: fare, createdAt: now, updatedAt: now },
+        { origin: destination, destination: origin, adultPriceSAR: fare, createdAt: now, updatedAt: now },
+      ]
+    }),
+  )
   try {
     await db.transaction('rw', [db.visas, db.hotels, db.tickets], async () => {
       await Promise.all([db.visas.clear(), db.hotels.clear(), db.tickets.clear()])
@@ -46,6 +54,7 @@ async function importTestData() {
       <RouterLink class="nav-item" to="/visas"><span>▣</span> Visa</RouterLink>
       <RouterLink class="nav-item" to="/hotels"><span>▤</span> Hotels</RouterLink>
       <RouterLink class="nav-item" to="/tickets"><span>✈</span> Tickets</RouterLink>
+      <RouterLink class="nav-item" to="/exchange-rate"><span>₨</span> Exchange rate</RouterLink>
       <RouterLink class="nav-item" to="/backup"><span>▧</span> Backup &amp; import</RouterLink>
       <button class="nav-item seed-button" :disabled="seeding" @click="importTestData"><span>✦</span> {{ seeding ? 'Importing…' : 'Import test data' }}</button>
     </nav>

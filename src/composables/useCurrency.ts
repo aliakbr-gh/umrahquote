@@ -5,6 +5,7 @@ export type Currency = 'SAR' | 'PKR'
 const CURRENCY_KEY = 'umrahquote:currency'
 const RATE_KEY = 'umrahquote:sar-pkr-rate'
 const RATE_UPDATED_KEY = 'umrahquote:sar-pkr-rate-updated'
+const RATE_MODE_KEY = 'umrahquote:exchange-rate-mode'
 const RATE_URL = 'https://2024-03-06.currency-api.pages.dev/v1/currencies/sar.json'
 const FALLBACK_RATE = 74.5
 const CACHE_TTL = 12 * 60 * 60 * 1000
@@ -14,6 +15,7 @@ const rate = ref(Number(localStorage.getItem(RATE_KEY)) || FALLBACK_RATE)
 const rateUpdatedAt = ref(localStorage.getItem(RATE_UPDATED_KEY) || '')
 const isSyncing = ref(false)
 const syncError = ref('')
+const rateMode = ref<'live' | 'custom'>((localStorage.getItem(RATE_MODE_KEY) as 'live' | 'custom') || 'live')
 
 export function useCurrency() {
   const formatter = computed(
@@ -30,6 +32,20 @@ export function useCurrency() {
     localStorage.setItem(CURRENCY_KEY, value)
   }
 
+  function setRateMode(value: 'live' | 'custom') {
+    rateMode.value = value
+    localStorage.setItem(RATE_MODE_KEY, value)
+    if (value === 'live') syncRate(true)
+  }
+
+  function setCustomRate(value: number) {
+    if (!Number.isFinite(value) || value <= 0) return
+    rate.value = value
+    rateUpdatedAt.value = new Date().toISOString()
+    localStorage.setItem(RATE_KEY, String(value))
+    localStorage.setItem(RATE_UPDATED_KEY, rateUpdatedAt.value)
+  }
+
   function convertFromSar(amount: number) {
     return currency.value === 'SAR' ? amount : amount * rate.value
   }
@@ -40,6 +56,7 @@ export function useCurrency() {
 
   async function syncRate(force = false) {
     const lastUpdate = Date.parse(rateUpdatedAt.value)
+    if (rateMode.value === 'custom') return
     if (!force && lastUpdate && Date.now() - lastUpdate < CACHE_TTL) return
 
     isSyncing.value = true
@@ -71,7 +88,10 @@ export function useCurrency() {
     rateUpdatedAt,
     isSyncing,
     syncError,
+    rateMode,
     setCurrency,
+    setRateMode,
+    setCustomRate,
     formatSar,
     syncRate,
   }

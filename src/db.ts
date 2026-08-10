@@ -12,17 +12,12 @@ export interface Visa {
 }
 
 export type HotelLocation = 'Makkah' | 'Madina'
-export type SharingType = 'Quint' | 'Quad' | 'Triple' | 'Double Bed'
-
 export interface Hotel {
   id?: number
   name: string
   location: HotelLocation
-  umrahDays: number
-  sharingType: SharingType
   distanceMeters: number
   priceSAR: number
-  transportationIncluded: boolean
   createdAt: string
   updatedAt: string
 }
@@ -32,8 +27,6 @@ export interface Ticket {
   origin: string
   destination: string
   adultPriceSAR: number
-  childPriceSAR: number
-  infantPriceSAR: number
   createdAt: string
   updatedAt: string
 }
@@ -74,6 +67,35 @@ class UmrahQuoteDatabase extends Dexie {
       hotels: '++id, name, location, sharingType, umrahDays, updatedAt',
       tickets: '++id, origin, destination, updatedAt',
     })
+    this.version(5)
+      .stores({
+        visas: '++id, name, validityDays, createdAt, updatedAt',
+        hotels: '++id, name, location, updatedAt',
+        tickets: '++id, origin, destination, airline, updatedAt',
+      })
+    this.version(6)
+      .stores({
+        visas: '++id, name, validityDays, createdAt, updatedAt',
+        hotels: '++id, name, location, updatedAt',
+        tickets: '++id, origin, destination, updatedAt',
+      })
+      .upgrade((transaction) => transaction.table('tickets').toCollection().modify((ticket: Record<string, unknown>) => {
+        delete ticket.airline
+        delete ticket.fareSource
+        delete ticket.childPriceSAR
+        delete ticket.infantPriceSAR
+      }))
+      .upgrade(async (transaction) => {
+        await transaction.table('hotels').toCollection().modify((hotel: Record<string, unknown>) => {
+          delete hotel.umrahDays
+          delete hotel.sharingType
+          delete hotel.transportationIncluded
+        })
+        await transaction.table('tickets').toCollection().modify((ticket: Record<string, unknown>) => {
+          ticket.airline ??= 'Airline not specified'
+          ticket.fareSource ??= 'manual'
+        })
+      })
   }
 }
 

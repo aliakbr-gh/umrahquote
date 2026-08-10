@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, reactive, ref } from 'vue'
-import { db, type Hotel, type HotelLocation, type SharingType } from '../db'
+import { db, type Hotel, type HotelLocation } from '../db'
 import { useCurrency } from '../composables/useCurrency'
 import AppSidebar from '../components/AppSidebar.vue'
 import AppHeader from '../components/AppHeader.vue'
@@ -16,21 +16,15 @@ const errorMessage = ref('')
 type HotelForm = {
   name: string
   location: HotelLocation
-  umrahDays: number | null
-  sharingType: SharingType
   distanceMeters: number | null
   priceSAR: number | null
-  transportationIncluded: boolean
 }
 
 const emptyForm = (): HotelForm => ({
   name: '',
   location: 'Makkah',
-  umrahDays: null,
-  sharingType: 'Quint',
   distanceMeters: null,
   priceSAR: null,
-  transportationIncluded: false,
 })
 
 const form = reactive<HotelForm>(emptyForm())
@@ -55,11 +49,8 @@ function openEdit(hotel: Hotel) {
   Object.assign(form, {
     name: hotel.name,
     location: hotel.location,
-    umrahDays: hotel.umrahDays,
-    sharingType: hotel.sharingType,
     distanceMeters: hotel.distanceMeters,
     priceSAR: hotel.priceSAR,
-    transportationIncluded: hotel.transportationIncluded,
   })
   errorMessage.value = ''
   showForm.value = true
@@ -76,8 +67,8 @@ async function saveHotel() {
     errorMessage.value = 'Enter the hotel name.'
     return
   }
-  if (form.umrahDays === null || form.umrahDays < 1 || form.distanceMeters === null || form.distanceMeters < 0 || form.priceSAR === null || form.priceSAR < 0) {
-    errorMessage.value = 'Enter valid days, distance, and price.'
+  if (form.distanceMeters === null || form.distanceMeters < 0 || form.priceSAR === null || form.priceSAR < 0) {
+    errorMessage.value = 'Enter a valid distance and price.'
     return
   }
 
@@ -86,11 +77,8 @@ async function saveHotel() {
   const record = {
     name: form.name.trim(),
     location: form.location,
-    umrahDays: Number(form.umrahDays),
-    sharingType: form.sharingType,
     distanceMeters: Number(form.distanceMeters),
     priceSAR: Number(form.priceSAR),
-    transportationIncluded: form.transportationIncluded,
     updatedAt: now,
   }
   if (editingId.value !== null) await db.hotels.update(editingId.value, record)
@@ -143,19 +131,16 @@ onMounted(loadHotels)
               <div class="visa-symbol">▤</div>
               <div>
                 <h3>{{ hotel.name }}</h3>
-                <p>{{ hotel.location }} · {{ hotel.umrahDays }} days</p>
+                <p>{{ hotel.location }}</p>
               </div>
               <div class="card-actions"><button @click="openEdit(hotel)">Edit</button><button class="danger"
                   @click="removeHotel(hotel)">Delete</button></div>
             </div>
             <div class="hotel-facts">
-              <div><span>SHARING</span><strong>{{ hotel.sharingType }}</strong></div>
               <div><span>DISTANCE</span><strong>{{ hotel.distanceMeters }}m from {{ hotelLandmark(hotel.location)
                   }}</strong></div>
-              <div><span>TRANSPORT</span><strong>{{ hotel.transportationIncluded ? 'Included' : 'Not included'
-                  }}</strong></div>
             </div>
-            <div class="hotel-price"><span>PER PERSON / NIGHT</span><strong>{{ formatSar(hotel.priceSAR) }}</strong></div>
+            <div class="hotel-price"><span>ROOM / NIGHT</span><strong>{{ formatSar(hotel.priceSAR) }}</strong></div>
           </article>
         </div>
       </section>
@@ -175,22 +160,9 @@ onMounted(loadHotels)
               <option>Makkah</option>
               <option>Madina</option>
             </select></label>
-          <label>Umrah stay (days)<input v-model.number="form.umrahDays" min="1" type="number" required /></label>
+          <label>Distance from {{ landmark }} (meters)<input v-model.number="form.distanceMeters" min="0" type="number" required /></label>
         </div>
-        <div class="form-row">
-          <label>Room sharing<select v-model="form.sharingType">
-              <option>Quint</option>
-              <option>Quad</option>
-              <option>Triple</option>
-              <option>Double Bed</option>
-            </select></label>
-          <label>Distance from {{ landmark }} (meters)<input v-model.number="form.distanceMeters" min="0" type="number"
-              required /></label>
-        </div>
-        <label>Price per person/night (SAR)<input v-model.number="form.priceSAR" min="0" step="0.01" type="number" required /></label>
-        <label class="checkbox-label"><input v-model="form.transportationIncluded"
-            type="checkbox" /><span><strong>Transportation included</strong><small>Transport is included in this hotel
-              package.</small></span></label>
+        <label>Price per night / room (SAR)<input v-model.number="form.priceSAR" min="0" step="0.01" type="number" required /></label>
         <p class="form-hint">Prices are stored in SAR and converted for display using the saved exchange rate.</p>
         <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>
         <div class="modal-actions"><button type="button" class="secondary-button"

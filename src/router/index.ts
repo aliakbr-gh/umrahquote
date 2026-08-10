@@ -33,6 +33,7 @@ const router = createRouter({
       name: 'backup',
       component: () => import('../views/BackupView.vue'),
     },
+    { path: '/exchange-rate', name: 'exchange-rate', component: () => import('../views/ExchangeRateView.vue') },
   ],
 })
 

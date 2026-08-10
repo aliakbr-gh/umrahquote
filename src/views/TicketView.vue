@@ -17,16 +17,12 @@ type TicketForm = {
   origin: string
   destination: string
   adultPriceSAR: number | null
-  childPriceSAR: number | null
-  infantPriceSAR: number | null
 }
 
 const emptyForm = (): TicketForm => ({
-  origin: '',
-  destination: '',
+  origin: 'Karachi (KHI)',
+  destination: 'Jeddah (JED)',
   adultPriceSAR: null,
-  childPriceSAR: null,
-  infantPriceSAR: null,
 })
 const form = reactive<TicketForm>(emptyForm())
 const isEditing = computed(() => editingId.value !== null)
@@ -50,8 +46,6 @@ function openEdit(ticket: Ticket) {
     origin: ticket.origin,
     destination: ticket.destination,
     adultPriceSAR: ticket.adultPriceSAR,
-    childPriceSAR: ticket.childPriceSAR,
-    infantPriceSAR: ticket.infantPriceSAR,
   })
   errorMessage.value = ''
   showForm.value = true
@@ -64,8 +58,8 @@ function closeForm() {
 
 async function saveTicket() {
   errorMessage.value = ''
-  const origin = form.origin.trim()
-  const destination = form.destination.trim()
+  const origin = form.origin
+  const destination = form.destination
   if (!origin || !destination) {
     errorMessage.value = 'Enter both origin and destination.'
     return
@@ -74,9 +68,8 @@ async function saveTicket() {
     errorMessage.value = 'Origin and destination must be different.'
     return
   }
-  const prices = [form.adultPriceSAR, form.childPriceSAR, form.infantPriceSAR]
-  if (prices.some((price) => price === null || price < 0)) {
-    errorMessage.value = 'Enter every ticket price. Prices cannot be negative.'
+  if (form.adultPriceSAR === null || form.adultPriceSAR < 0) {
+    errorMessage.value = 'Enter a valid adult ticket fare.'
     return
   }
 
@@ -86,8 +79,6 @@ async function saveTicket() {
     origin,
     destination,
     adultPriceSAR: Number(form.adultPriceSAR),
-    childPriceSAR: Number(form.childPriceSAR),
-    infantPriceSAR: Number(form.infantPriceSAR),
     updatedAt: now,
   }
   if (editingId.value !== null) await db.tickets.update(editingId.value, record)
@@ -126,13 +117,11 @@ onMounted(loadTickets)
           <article v-for="ticket in tickets" :key="ticket.id" class="visa-card ticket-card">
             <div class="card-head">
               <div class="visa-symbol ticket-symbol">✈</div>
-              <div class="ticket-route"><h3>{{ ticket.origin }} <span>→</span> {{ ticket.destination }}</h3><p>Per traveller ticket price</p></div>
+              <div class="ticket-route"><h3>{{ ticket.origin }} <span>→</span> {{ ticket.destination }}</h3><p>Adult fare</p></div>
               <div class="card-actions"><button @click="openEdit(ticket)">Edit</button><button class="danger" @click="removeTicket(ticket)">Delete</button></div>
             </div>
             <div class="prices">
-              <div><span>ADULT</span><strong>{{ formatSar(ticket.adultPriceSAR) }}</strong></div>
-              <div><span>CHILD</span><strong>{{ formatSar(ticket.childPriceSAR) }}</strong></div>
-              <div><span>INFANT</span><strong>{{ formatSar(ticket.infantPriceSAR) }}</strong></div>
+              <div><span>ADULT FARE</span><strong>{{ formatSar(ticket.adultPriceSAR) }}</strong></div>
             </div>
           </article>
         </div>
@@ -143,15 +132,13 @@ onMounted(loadTickets)
       <form class="modal" @submit.prevent="saveTicket">
         <div class="modal-head"><div><p class="eyebrow">TICKET DETAILS</p><h2>{{ isEditing ? 'Edit ticket' : 'Add a new ticket' }}</h2></div><button type="button" class="close-button" @click="closeForm">×</button></div>
         <div class="form-row">
-          <label>Origin<input v-model="form.origin" autofocus placeholder="e.g. Karachi (KHI)" required /></label>
-          <label>Destination<input v-model="form.destination" placeholder="e.g. Jeddah (JED)" required /></label>
+          <label>Origin<select v-model="form.origin" autofocus><option>Karachi (KHI)</option><option>Islamabad (ISB)</option><option>Lahore (LHE)</option><option>Multan (MUX)</option></select></label>
+          <label>Destination<select v-model="form.destination"><option>Jeddah (JED)</option><option>Madina (MED)</option></select></label>
         </div>
         <div class="form-prices">
           <label>Adult price (SAR)<input v-model.number="form.adultPriceSAR" min="0" step="0.01" type="number" required /></label>
-          <label>Child price (SAR)<input v-model.number="form.childPriceSAR" min="0" step="0.01" type="number" required /></label>
-          <label>Infant price (SAR)<input v-model.number="form.infantPriceSAR" min="0" step="0.01" type="number" required /></label>
         </div>
-        <p class="form-hint">Prices are stored in SAR and converted for display using the saved exchange rate.</p>
+        <p class="form-hint">Prices are saved in SAR. Live airline fares require a connected flight-search provider; update the latest supplier fare here when needed.</p>
         <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>
         <div class="modal-actions"><button type="button" class="secondary-button" @click="closeForm">Cancel</button><button class="primary-button" :disabled="saving">{{ saving ? 'Saving…' : isEditing ? 'Save changes' : 'Create ticket' }}</button></div>
       </form>
