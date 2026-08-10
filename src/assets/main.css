@@ -1111,8 +1111,43 @@ h2 {
 }
 
 .quote-result dl {
-    margin: 20px 0 0;
+    margin: 8px 0 0;
 }
+
+.quote-breakdown {
+    margin-top: 19px;
+    padding-top: 16px;
+    border-top: 1px solid #31564e;
+}
+
+.quote-breakdown h3 {
+    margin: 0 0 8px;
+    color: #f0cc7e;
+    font-size: 12px;
+    font-family: inherit;
+    text-transform: uppercase;
+    letter-spacing: .09em;
+}
+
+.per-head-total {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 3px;
+    margin-top: 11px;
+    padding: 10px;
+    border-radius: 8px;
+    background: #204b41;
+}
+
+.per-head-total span {
+    color: #93afa7;
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .12em;
+}
+
+.per-head-total strong { color: #f0cc7e; font-size: 17px; }
+.per-head-total small { grid-column: 1 / -1; color: #a7bdb7; font-size: 9px; }
 
 .quote-result dl div {
     display: grid;

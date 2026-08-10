@@ -28,8 +28,8 @@ async function importTestData() {
     saudiDestinations.flatMap((destination) => {
       const fare = baseFare + (destination === 'Madina (MED)' ? 90 : 0)
       return [
-        { origin, destination, adultPriceSAR: fare, createdAt: now, updatedAt: now },
-        { origin: destination, destination: origin, adultPriceSAR: fare, createdAt: now, updatedAt: now },
+        { origin, destination, adultPriceSAR: fare, childPriceSAR: fare * 0.8, infantPriceSAR: fare * 0.2, createdAt: now, updatedAt: now },
+        { origin: destination, destination: origin, adultPriceSAR: fare, childPriceSAR: fare * 0.8, infantPriceSAR: fare * 0.2, createdAt: now, updatedAt: now },
       ]
     }),
   )

@@ -87,7 +87,7 @@ function validateBackup(value: unknown): value is BackupFile {
   const validTickets = value.data.tickets.every(
     (item) =>
       isRecord(item) && typeof item.origin === 'string' && typeof item.destination === 'string' &&
-      typeof item.adultPriceSAR === 'number',
+      typeof item.adultPriceSAR === 'number' && typeof item.childPriceSAR === 'number' && typeof item.infantPriceSAR === 'number',
   )
   return validVisas && validHotels && validTickets
 }

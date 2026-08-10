@@ -27,6 +27,8 @@ export interface Ticket {
   origin: string
   destination: string
   adultPriceSAR: number
+  childPriceSAR: number
+  infantPriceSAR: number
   createdAt: string
   updatedAt: string
 }
@@ -84,6 +86,17 @@ class UmrahQuoteDatabase extends Dexie {
         delete ticket.fareSource
         delete ticket.childPriceSAR
         delete ticket.infantPriceSAR
+      }))
+    this.version(7)
+      .stores({
+        visas: '++id, name, validityDays, createdAt, updatedAt',
+        hotels: '++id, name, location, updatedAt',
+        tickets: '++id, origin, destination, updatedAt',
+      })
+      .upgrade((transaction) => transaction.table('tickets').toCollection().modify((ticket: Record<string, unknown>) => {
+        const adult = typeof ticket.adultPriceSAR === 'number' ? ticket.adultPriceSAR : 0
+        ticket.childPriceSAR ??= adult * 0.8
+        ticket.infantPriceSAR ??= adult * 0.2
       }))
       .upgrade(async (transaction) => {
         await transaction.table('hotels').toCollection().modify((hotel: Record<string, unknown>) => {

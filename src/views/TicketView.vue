@@ -17,12 +17,16 @@ type TicketForm = {
   origin: string
   destination: string
   adultPriceSAR: number | null
+  childPriceSAR: number | null
+  infantPriceSAR: number | null
 }
 
 const emptyForm = (): TicketForm => ({
   origin: 'Karachi (KHI)',
   destination: 'Jeddah (JED)',
   adultPriceSAR: null,
+  childPriceSAR: null,
+  infantPriceSAR: null,
 })
 const form = reactive<TicketForm>(emptyForm())
 const isEditing = computed(() => editingId.value !== null)
@@ -46,6 +50,8 @@ function openEdit(ticket: Ticket) {
     origin: ticket.origin,
     destination: ticket.destination,
     adultPriceSAR: ticket.adultPriceSAR,
+    childPriceSAR: ticket.childPriceSAR,
+    infantPriceSAR: ticket.infantPriceSAR,
   })
   errorMessage.value = ''
   showForm.value = true
@@ -68,8 +74,8 @@ async function saveTicket() {
     errorMessage.value = 'Origin and destination must be different.'
     return
   }
-  if (form.adultPriceSAR === null || form.adultPriceSAR < 0) {
-    errorMessage.value = 'Enter a valid adult ticket fare.'
+  if ([form.adultPriceSAR, form.childPriceSAR, form.infantPriceSAR].some((price) => price === null || price < 0)) {
+    errorMessage.value = 'Enter valid adult, child, and infant ticket fares.'
     return
   }
 
@@ -79,6 +85,8 @@ async function saveTicket() {
     origin,
     destination,
     adultPriceSAR: Number(form.adultPriceSAR),
+    childPriceSAR: Number(form.childPriceSAR),
+    infantPriceSAR: Number(form.infantPriceSAR),
     updatedAt: now,
   }
   if (editingId.value !== null) await db.tickets.update(editingId.value, record)
@@ -117,11 +125,11 @@ onMounted(loadTickets)
           <article v-for="ticket in tickets" :key="ticket.id" class="visa-card ticket-card">
             <div class="card-head">
               <div class="visa-symbol ticket-symbol">✈</div>
-              <div class="ticket-route"><h3>{{ ticket.origin }} <span>→</span> {{ ticket.destination }}</h3><p>Adult fare</p></div>
+              <div class="ticket-route"><h3>{{ ticket.origin }} <span>→</span> {{ ticket.destination }}</h3><p>Per-traveller fare</p></div>
               <div class="card-actions"><button @click="openEdit(ticket)">Edit</button><button class="danger" @click="removeTicket(ticket)">Delete</button></div>
             </div>
             <div class="prices">
-              <div><span>ADULT FARE</span><strong>{{ formatSar(ticket.adultPriceSAR) }}</strong></div>
+              <div><span>ADULT</span><strong>{{ formatSar(ticket.adultPriceSAR) }}</strong></div><div><span>CHILD</span><strong>{{ formatSar(ticket.childPriceSAR) }}</strong></div><div><span>INFANT</span><strong>{{ formatSar(ticket.infantPriceSAR) }}</strong></div>
             </div>
           </article>
         </div>
@@ -137,6 +145,8 @@ onMounted(loadTickets)
         </div>
         <div class="form-prices">
           <label>Adult price (SAR)<input v-model.number="form.adultPriceSAR" min="0" step="0.01" type="number" required /></label>
+          <label>Child price (SAR)<input v-model.number="form.childPriceSAR" min="0" step="0.01" type="number" required /></label>
+          <label>Infant price (SAR)<input v-model.number="form.infantPriceSAR" min="0" step="0.01" type="number" required /></label>
         </div>
         <p class="form-hint">Prices are saved in SAR. Live airline fares require a connected flight-search provider; update the latest supplier fare here when needed.</p>
         <p v-if="errorMessage" class="form-error">{{ errorMessage }}</p>

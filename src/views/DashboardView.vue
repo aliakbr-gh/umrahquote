@@ -26,20 +26,28 @@ const form = reactive({
   adults: 1,
   children: 0,
   infants: 0,
-  childBedIncluded: false,
-  infantBedIncluded: false,
   agentName: '',
   agentContact: '',
+  whatsappReceiver: '',
 })
 
 type QuoteResult = {
   adult: number
   child: number
   infant: number
-  hotelSharePerBed: number
-  bedCount: number
+  makkahHotelPerAdultNight: number
+  madinaHotelPerAdultNight: number
+  makkahHotelPerAdult: number
+  madinaHotelPerAdult: number
   sharingLabel: string
   adultFlightFare: number
+  outboundFare: number
+  returnFare: number
+  adultVisaFare: number
+  childVisaFare: number
+  infantVisaFare: number
+  childFlightFare: number
+  infantFlightFare: number
   hotelRoomTotal: number
   groupTotal: number
   travellers: number
@@ -104,21 +112,35 @@ function getQuotation() {
     quoteError.value = 'Enter at least one adult.'
     return
   }
-  const bedCount = form.adults + (form.childBedIncluded ? form.children : 0) + (form.infantBedIncluded ? form.infants : 0)
   const hotelRoomTotal = makkahHotel.priceSAR * form.makkahDays + madinaHotel.priceSAR * form.madinaDays
-  const hotelSharePerBed = hotelRoomTotal / bedCount
-  const sharingLabel = ({ 1: 'Single', 2: 'Double', 3: 'Triple', 4: 'Quad', 5: 'Quint' } as Record<number, string>)[bedCount] || `${bedCount}-bed sharing`
-  const adult = visa.adultPriceSAR + outboundTicket.adultPriceSAR + returnTicket.adultPriceSAR + hotelSharePerBed
-  const child = visa.childPriceSAR + (form.childBedIncluded ? hotelSharePerBed : 0)
-  const infant = visa.infantPriceSAR + (form.infantBedIncluded ? hotelSharePerBed : 0)
+  const makkahHotelPerAdultNight = makkahHotel.priceSAR / form.adults
+  const madinaHotelPerAdultNight = madinaHotel.priceSAR / form.adults
+  const makkahHotelPerAdult = makkahHotelPerAdultNight * form.makkahDays
+  const madinaHotelPerAdult = madinaHotelPerAdultNight * form.madinaDays
+  const hotelSharePerAdult = makkahHotelPerAdult + madinaHotelPerAdult
+  const sharingLabel = ({ 1: 'Single', 2: 'Double', 3: 'Triple', 4: 'Quad', 5: 'Quint' } as Record<number, string>)[form.adults] || `${form.adults}-adult sharing`
+  const adult = visa.adultPriceSAR + outboundTicket.adultPriceSAR + returnTicket.adultPriceSAR + hotelSharePerAdult
+  const childFlightFare = outboundTicket.childPriceSAR + returnTicket.childPriceSAR
+  const infantFlightFare = outboundTicket.infantPriceSAR + returnTicket.infantPriceSAR
+  const child = visa.childPriceSAR + childFlightFare
+  const infant = visa.infantPriceSAR + infantFlightFare
   result.value = {
     adult,
     child,
     infant,
-    hotelSharePerBed,
-    bedCount,
+    makkahHotelPerAdultNight,
+    madinaHotelPerAdultNight,
+    makkahHotelPerAdult,
+    madinaHotelPerAdult,
     sharingLabel,
     adultFlightFare: outboundTicket.adultPriceSAR + returnTicket.adultPriceSAR,
+    outboundFare: outboundTicket.adultPriceSAR,
+    returnFare: returnTicket.adultPriceSAR,
+    adultVisaFare: visa.adultPriceSAR,
+    childVisaFare: visa.childPriceSAR,
+    infantVisaFare: visa.infantPriceSAR,
+    childFlightFare,
+    infantFlightFare,
     hotelRoomTotal,
     groupTotal: adult * form.adults + child * form.children + infant * form.infants,
     travellers: travellerTotal.value,
@@ -135,7 +157,7 @@ function getQuotation() {
 function quotationText() {
   if (!result.value) return ''
   const r = result.value
-  return `${r.packageDays}-day Umrah quotation\n${r.makkahDays} nights Makkah · ${r.madinaDays} nights Madina\n${r.makkahHotel} / ${r.madinaHotel}\n${r.sharingLabel} sharing (${r.bedCount} beds)\nAdult: ${formatSar(r.adult)}${form.children ? `\nChild: ${formatSar(r.child)}${form.childBedIncluded ? ' (bed included)' : ''}` : ''}${form.infants ? `\nInfant: ${formatSar(r.infant)}${form.infantBedIncluded ? ' (bed included)' : ''}` : ''}\nGroup total: ${formatSar(r.groupTotal)}\n${form.agentName ? `${form.agentName}${form.agentContact ? ` · ${form.agentContact}` : ''}` : ''}`
+  return `${r.packageDays}-day Umrah quotation\n${r.makkahDays} nights Makkah · ${r.madinaDays} nights Madina\n\nADULT PRICE BREAKDOWN\nVisa: ${formatSar(r.adultVisaFare)}\nOutbound flight: ${formatSar(r.outboundFare)}\nReturn flight: ${formatSar(r.returnFare)}\nMakkah hotel: ${formatSar(r.makkahHotelPerAdultNight)}/night × ${r.makkahDays} = ${formatSar(r.makkahHotelPerAdult)}\nMadina hotel: ${formatSar(r.madinaHotelPerAdultNight)}/night × ${r.madinaDays} = ${formatSar(r.madinaHotelPerAdult)}\nAdult per head: ${formatSar(r.adult)}\n\nGROUP BILL\nAdults: ${formatSar(r.adult)} × ${form.adults} = ${formatSar(r.adult * form.adults)}${form.children ? `\nChildren (visa + return flights): ${formatSar(r.child)} × ${form.children} = ${formatSar(r.child * form.children)}` : ''}${form.infants ? `\nInfants (visa + return flights): ${formatSar(r.infant)} × ${form.infants} = ${formatSar(r.infant * form.infants)}` : ''}\nGROUP TOTAL: ${formatSar(r.groupTotal)}\n${form.agentName ? `${form.agentName}${form.agentContact ? ` · ${form.agentContact}` : ''}` : ''}`
 }
 
 async function shareQuotation() {
@@ -144,16 +166,30 @@ async function shareQuotation() {
   else window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener')
 }
 
-function shareWhatsApp() { window.open(`https://wa.me/?text=${encodeURIComponent(quotationText())}`, '_blank', 'noopener') }
+function shareWhatsApp() {
+  const enteredNumber = form.whatsappReceiver.replace(/\D/g, '')
+  const receiver = enteredNumber.startsWith('03') ? `92${enteredNumber.slice(1)}` : enteredNumber
+  window.open(`https://wa.me/${receiver ? receiver : ''}?text=${encodeURIComponent(quotationText())}`, '_blank', 'noopener')
+}
 
 async function downloadBrochure() {
   if (!result.value) return
   const r = result.value
   const esc = (value: string) => value.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]!))
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1500"><rect width="100%" height="100%" fill="#edf3ef"/><rect width="100%" height="390" fill="#0d3029"/><path d="M0 340 Q300 430 600 345 T1200 350V390H0Z" fill="#d7a64d"/><text x="90" y="115" fill="#d7a64d" font-family="Georgia" font-size="37" letter-spacing="5">UMRAHQUOTE</text><text x="90" y="205" fill="white" font-family="Georgia" font-size="64">Umrah Journey</text><text x="90" y="263" fill="#c9d8d2" font-family="Arial" font-size="26">${r.packageDays} DAY PACKAGE  •  ${r.makkahDays} NIGHTS MAKKAH  •  ${r.madinaDays} NIGHTS MADINA</text><rect x="70" y="450" width="1060" height="360" rx="24" fill="white"/><text x="115" y="515" fill="#8b6a2d" font-family="Arial" font-size="20" font-weight="bold" letter-spacing="3">ACCOMMODATION</text><text x="115" y="590" fill="#173f36" font-family="Georgia" font-size="38">${esc(r.makkahHotel)}</text><text x="115" y="640" fill="#607a70" font-family="Arial" font-size="25">Makkah · ${r.makkahDays} nights</text><text x="115" y="710" fill="#173f36" font-family="Georgia" font-size="38">${esc(r.madinaHotel)}</text><text x="115" y="760" fill="#607a70" font-family="Arial" font-size="25">Madina · ${r.madinaDays} nights · ${r.sharingLabel} sharing (${r.bedCount} beds)</text><rect x="70" y="855" width="1060" height="330" rx="24" fill="#173f36"/><text x="115" y="925" fill="#d7a64d" font-family="Arial" font-size="20" font-weight="bold" letter-spacing="3">PACKAGE INVESTMENT</text><text x="115" y="1010" fill="white" font-family="Arial" font-size="30">Adult × ${form.adults}</text><text x="1080" y="1010" fill="white" font-family="Georgia" font-size="38" text-anchor="end">${esc(formatSar(r.adult))}</text>${form.children ? `<text x="115" y="1065" fill="white" font-family="Arial" font-size="30">Child × ${form.children}${form.childBedIncluded ? ' · bed included' : ''}</text><text x="1080" y="1065" fill="white" font-family="Georgia" font-size="38" text-anchor="end">${esc(formatSar(r.child))}</text>` : ''}${form.infants ? `<text x="115" y="1120" fill="white" font-family="Arial" font-size="30">Infant × ${form.infants}${form.infantBedIncluded ? ' · bed included' : ''}</text><text x="1080" y="1120" fill="white" font-family="Georgia" font-size="38" text-anchor="end">${esc(formatSar(r.infant))}</text>` : ''}<rect x="70" y="1235" width="1060" height="150" rx="24" fill="#d7a64d"/><text x="115" y="1300" fill="#173f36" font-family="Arial" font-size="23" font-weight="bold">TOTAL PACKAGE PRICE</text><text x="1080" y="1325" fill="#173f36" font-family="Georgia" font-size="52" font-weight="bold" text-anchor="end">${esc(formatSar(r.groupTotal))}</text><text x="90" y="1450" fill="#607a70" font-family="Arial" font-size="23">${esc(form.agentName || 'Travel Agent')}${form.agentContact ? `  ·  ${esc(form.agentContact)}` : ''}</text></svg>`
+  const adultRows: Array<[string, string]> = [
+    ['Visa', formatSar(r.adultVisaFare)], ['Outbound flight', formatSar(r.outboundFare)], ['Return flight', formatSar(r.returnFare)],
+    [`Makkah hotel (${r.makkahDays} nights)`, formatSar(r.makkahHotelPerAdult)], [`Madina hotel (${r.madinaDays} nights)`, formatSar(r.madinaHotelPerAdult)],
+  ]
+  const groupRows: Array<[string, string]> = [
+    [`Adults × ${form.adults}`, formatSar(r.adult * form.adults)],
+    ...(form.children ? [[`Children × ${form.children}`, formatSar(r.child * form.children)] as [string, string]] : []),
+    ...(form.infants ? [[`Infants × ${form.infants}`, formatSar(r.infant * form.infants)] as [string, string]] : []),
+  ]
+  const rows = (items: Array<[string, string]>, start: number, dark = false) => items.map(([label, value], i) => `<text x="125" y="${start + i * 55}" fill="${dark ? 'white' : '#173f36'}" font-family="Arial" font-size="25">${esc(label)}</text><text x="1075" y="${start + i * 55}" fill="${dark ? '#f0cc7e' : '#173f36'}" font-family="Georgia" font-size="29" text-anchor="end">${esc(value)}</text>`).join('')
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1800"><rect width="100%" height="100%" fill="#edf3ef"/><rect width="100%" height="320" fill="#0d3029"/><text x="90" y="105" fill="#d7a64d" font-family="Georgia" font-size="37" letter-spacing="5">UMRAHQUOTE</text><text x="90" y="190" fill="white" font-family="Georgia" font-size="62">Umrah quotation</text><text x="90" y="245" fill="#c9d8d2" font-family="Arial" font-size="25">${r.packageDays} DAYS · ${r.makkahDays} NIGHTS MAKKAH · ${r.madinaDays} NIGHTS MADINA</text><rect x="70" y="370" width="1060" height="285" rx="24" fill="white"/><text x="115" y="430" fill="#8b6a2d" font-family="Arial" font-size="19" font-weight="bold" letter-spacing="3">HOTELS &amp; SHARING</text><text x="115" y="495" fill="#173f36" font-family="Georgia" font-size="35">${esc(r.makkahHotel)}</text><text x="115" y="540" fill="#607a70" font-family="Arial" font-size="23">Makkah · ${formatSar(r.makkahHotelPerAdultNight)} per adult/night</text><text x="115" y="595" fill="#173f36" font-family="Georgia" font-size="35">${esc(r.madinaHotel)}</text><text x="115" y="635" fill="#607a70" font-family="Arial" font-size="23">Madina · ${r.sharingLabel} · room divided by ${form.adults} adults</text><rect x="70" y="700" width="1060" height="410" rx="24" fill="white"/><text x="115" y="765" fill="#8b6a2d" font-family="Arial" font-size="19" font-weight="bold" letter-spacing="3">ADULT PRICE — PER HEAD</text>${rows(adultRows, 835)}<line x1="115" y1="1110" x2="1085" y2="1110" stroke="#d8e2dd"/><text x="125" y="1165" fill="#173f36" font-family="Arial" font-size="27" font-weight="bold">Adult per head</text><text x="1075" y="1165" fill="#173f36" font-family="Georgia" font-size="37" font-weight="bold" text-anchor="end">${esc(formatSar(r.adult))}</text><rect x="70" y="1210" width="1060" height="390" rx="24" fill="#173f36"/><text x="115" y="1275" fill="#d7a64d" font-family="Arial" font-size="19" font-weight="bold" letter-spacing="3">GROUP BILL</text>${rows(groupRows, 1345, true)}<line x1="115" y1="1535" x2="1085" y2="1535" stroke="#41665e"/><text x="125" y="1590" fill="white" font-family="Arial" font-size="28" font-weight="bold">GROUP TOTAL</text><text x="1075" y="1590" fill="#f0cc7e" font-family="Georgia" font-size="45" font-weight="bold" text-anchor="end">${esc(formatSar(r.groupTotal))}</text><text x="90" y="1700" fill="#607a70" font-family="Arial" font-size="23">${esc(form.agentName || 'Travel Agent')}${form.agentContact ? `  ·  ${esc(form.agentContact)}` : ''}</text><text x="90" y="1740" fill="#607a70" font-family="Arial" font-size="20">Flights: ${esc(r.ticket)}</text></svg>`
   const image = new Image(); image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
   await new Promise<void>((resolve) => { image.onload = () => resolve() })
-  const canvas = document.createElement('canvas'); canvas.width = 1200; canvas.height = 1500
+  const canvas = document.createElement('canvas'); canvas.width = 1200; canvas.height = 1800
   canvas.getContext('2d')?.drawImage(image, 0, 0)
   const link = document.createElement('a'); link.download = 'umrah-quotation-brochure.png'; link.href = canvas.toDataURL('image/png'); link.click()
 }
@@ -206,12 +242,11 @@ onBeforeUnmount(() => window.removeEventListener('umrahquote:data-reset', loadCa
 
             <section class="builder-section">
               <div class="step-number">3</div>
-              <div class="builder-body"><h3>Travellers</h3><p>Hotel room cost is divided only among travellers with a bed.</p>
+              <div class="builder-body"><h3>Travellers</h3><p>Hotel room cost is divided only among adults. Children and infants do not have a hotel bed charge.</p>
                 <div class="traveller-fields"><label>Adults<input v-model.number="form.adults" min="0" type="number" /></label><label>Children<input v-model.number="form.children" min="0" type="number" /></label><label>Infants<input v-model.number="form.infants" min="0" type="number" /></label></div>
-                <div class="form-row"><label class="checkbox-label"><input v-model="form.childBedIncluded" type="checkbox" /><span><strong>Bed included for children</strong><small>Include each child in hotel room sharing.</small></span></label><label class="checkbox-label"><input v-model="form.infantBedIncluded" type="checkbox" /><span><strong>Bed included for infants</strong><small>Include each infant in hotel room sharing.</small></span></label></div>
               </div>
             </section>
-            <section class="builder-section"><div class="step-number">4</div><div class="builder-body"><h3>Brochure details</h3><p>Optional travel-agent details printed on the downloadable brochure.</p><div class="form-row"><label>Agent name<input v-model="form.agentName" placeholder="Agency or consultant name" /></label><label>Contact<input v-model="form.agentContact" placeholder="Phone / WhatsApp" /></label></div></div></section>
+            <section class="builder-section"><div class="step-number">4</div><div class="builder-body"><h3>Brochure & sharing details</h3><p>Agent details are printed on the brochure. Add a WhatsApp number to send the message directly to that recipient.</p><div class="form-row"><label>Agent name<input v-model="form.agentName" placeholder="Agency or consultant name" /></label><label>Contact<input v-model="form.agentContact" placeholder="Phone / WhatsApp" /></label></div><label>WhatsApp receiver number<input v-model="form.whatsappReceiver" inputmode="tel" placeholder="e.g. 03001234567" type="tel" /></label></div></section>
             <p v-if="quoteError" class="form-error">{{ quoteError }}</p>
             <button class="quote-button">✦ Get quotation</button>
           </form>
@@ -220,13 +255,9 @@ onBeforeUnmount(() => window.removeEventListener('umrahquote:data-reset', loadCa
             <template v-if="result">
               <p class="eyebrow">YOUR QUOTATION</p><h2>{{ result.packageDays }} day Umrah</h2>
               <div class="result-route"><span>{{ result.makkahDays }}d Makkah</span><i></i><span>{{ result.madinaDays }}d Madina</span></div>
-              <div class="result-prices">
-                <div v-if="form.adults"><span>PER ADULT</span><strong>{{ formatSar(result.adult) }}</strong><small>× {{ form.adults }}</small></div>
-                <div v-if="form.children"><span>PER CHILD</span><strong>{{ formatSar(result.child) }}</strong><small>× {{ form.children }} · {{ form.childBedIncluded ? 'bed included' : 'no hotel bed' }}</small></div>
-                <div v-if="form.infants"><span>PER INFANT</span><strong>{{ formatSar(result.infant) }}</strong><small>× {{ form.infants }} · {{ form.infantBedIncluded ? 'bed included' : 'no hotel bed' }}</small></div>
-              </div>
-              <div class="result-total"><span>GROUP TOTAL</span><strong>{{ formatSar(result.groupTotal) }}</strong><small>{{ result.travellers }} travellers · {{ result.sharingLabel }} sharing · {{ formatSar(result.hotelSharePerBed) }}/bed</small></div>
-              <dl><div><dt>Visa</dt><dd>{{ result.visa }} · adult {{ formatSar(visas.find(item => item.id === form.visaId)?.adultPriceSAR || 0) }}</dd></div><div><dt>Flights — adult return fare</dt><dd>{{ result.ticket }} · {{ formatSar(result.adultFlightFare) }}</dd></div><div><dt>Hotel rooms</dt><dd>{{ result.makkahHotel }} + {{ result.madinaHotel }} · {{ formatSar(result.hotelRoomTotal) }}</dd></div><div><dt>Room sharing</dt><dd>{{ result.sharingLabel }} · {{ result.bedCount }} beds · {{ formatSar(result.hotelSharePerBed) }} per bed</dd></div><div><dt>Child / infant tickets</dt><dd>Not included — the ticket catalogue has adult fares only.</dd></div></dl>
+              <section class="quote-breakdown"><h3>Adult price — per head</h3><dl><div><dt>Visa</dt><dd>{{ result.visa }} · {{ formatSar(result.adultVisaFare) }}</dd></div><div><dt>Outbound flight</dt><dd>{{ form.outboundOrigin }} → {{ form.outboundDestination }} · {{ formatSar(result.outboundFare) }}</dd></div><div><dt>Return flight</dt><dd>{{ form.returnOrigin }} → {{ form.returnDestination }} · {{ formatSar(result.returnFare) }}</dd></div><div><dt>Makkah hotel</dt><dd>{{ formatSar(result.makkahHotelPerAdultNight) }}/night × {{ result.makkahDays }} = {{ formatSar(result.makkahHotelPerAdult) }}</dd></div><div><dt>Madina hotel</dt><dd>{{ formatSar(result.madinaHotelPerAdultNight) }}/night × {{ result.madinaDays }} = {{ formatSar(result.madinaHotelPerAdult) }}</dd></div></dl><div class="per-head-total"><span>ADULT PER HEAD</span><strong>{{ formatSar(result.adult) }}</strong><small>{{ result.sharingLabel }} · room rate split between {{ form.adults }} adults</small></div></section>
+              <section class="quote-breakdown"><h3>Group bill</h3><div class="result-prices"><div><span>ADULTS</span><strong>{{ formatSar(result.adult * form.adults) }}</strong><small>{{ formatSar(result.adult) }} × {{ form.adults }}</small></div><div v-if="form.children"><span>CHILDREN — VISA + FLIGHTS</span><strong>{{ formatSar(result.child * form.children) }}</strong><small>Visa {{ formatSar(result.childVisaFare) }} + return flights {{ formatSar(result.childFlightFare) }} · {{ formatSar(result.child) }} × {{ form.children }}</small></div><div v-if="form.infants"><span>INFANTS — VISA + FLIGHTS</span><strong>{{ formatSar(result.infant * form.infants) }}</strong><small>Visa {{ formatSar(result.infantVisaFare) }} + return flights {{ formatSar(result.infantFlightFare) }} · {{ formatSar(result.infant) }} × {{ form.infants }}</small></div></div></section>
+              <div class="result-total"><span>GROUP TOTAL</span><strong>{{ formatSar(result.groupTotal) }}</strong><small>{{ result.travellers }} travellers</small></div>
               <div class="modal-actions"><button class="secondary-button" type="button" @click="shareWhatsApp">WhatsApp message</button><button class="secondary-button" type="button" @click="shareQuotation">Share</button><button class="primary-button" type="button" @click="downloadBrochure">Download brochure PNG</button></div>
             </template>
             <template v-else><div class="result-placeholder"><span>✦</span><h3>Your quotation will appear here</h3><p>Complete the package details and select Get quotation.</p></div></template>
